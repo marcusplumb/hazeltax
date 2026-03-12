@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16
+    container_name: tax_mvp_db
+    environment:
+      POSTGRES_USER: taxmvp
+      POSTGRES_PASSWORD: taxmvp
+      POSTGRES_DB: taxmvp
+    ports:
+      - "5432:5432"
+    volumes:
+      - tax_mvp_pgdata:/var/lib/postgresql/data
+volumes:
+  tax_mvp_pgdata:

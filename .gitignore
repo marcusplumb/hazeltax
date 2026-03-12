@@ -1,0 +1,29 @@
+# node
+node_modules
+.pnpm-store
+
+# builds
+dist
+build
+
+# env files
+.env
+.env.*
+!.env.example
+
+# prisma / sqlite
+apps/api/dev.db
+apps/api/prisma/dev.db
+*.db
+*.db-journal
+
+# uploads
+apps/api/uploads
+
+# logs
+*.log
+
+# OS / editor
+.DS_Store
+.vscode/*
+!.vscode/settings.json
