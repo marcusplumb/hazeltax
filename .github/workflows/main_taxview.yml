@@ -5,22 +5,25 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node 20
         uses: actions/setup-node@v4
         with:
           node-version: "20"
 
-      - name: Enable pnpm
+      - name: Enable pnpm (Corepack)
+        shell: bash
         run: |
           corepack enable
           corepack prepare pnpm@9.15.4 --activate
@@ -32,25 +35,28 @@ jobs:
       - name: Build API
         run: pnpm --filter api run build
 
-      # Optional but recommended: generate prisma client for the build output
-      - name: Prisma generate
+      - name: Prisma generate (API)
         run: pnpm --filter api exec -- prisma generate
 
-      # Create a clean deployment package containing ONLY apps/api
-      - name: Prepare deploy package
+      - name: Prepare deployment package (apps/api only)
+        shell: bash
         run: |
+          rm -rf deploy
           mkdir -p deploy/api
           rsync -av --delete \
             --exclude "node_modules" \
             --exclude ".env" \
+            --exclude ".env.*" \
+            --exclude "*.log" \
             apps/api/ deploy/api/
 
-      - name: Login to Azure
+      - name: Azure login (OIDC)
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_4F75037729B446AA8AC238DB570672B9 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0E49E179CA5048D19BB73D3853691D01 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_22C6665F36614909B7C276BAF08F2D23 }}
+          auth-type: "OIDC"
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
