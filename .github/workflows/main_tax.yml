@@ -1,0 +1,54 @@
+name: Deploy API to Azure Web App - TaxView
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@9.15.4 --activate
+          pnpm -v
+
+      - name: Install workspace deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Build API
+        run: pnpm --filter api run build
+
+      - name: Prisma generate (API)
+        run: pnpm --filter api exec -- prisma generate
+
+      # Package ONLY apps/api for deployment
+      - name: Create deployment zip
+        run: |
+          cd apps/api
+          zip -r ../../api-deploy.zip . -x "node_modules/*" ".env" ".env.*" "*.log"
+          cd ../..
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_4F75037729B446AA8AC238DB570672B9 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0E49E179CA5048D19BB73D3853691D01 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_22C6665F36614909B7C276BAF08F2D23 }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: "TaxView"
+          slot-name: "Production"
+          package: api-deploy.zip
