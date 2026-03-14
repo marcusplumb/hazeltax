@@ -130,7 +130,7 @@ router.post("/", async (req, res) => {
 
       if (periods.length > 0) {
         await prisma.filingPeriod.createMany({
-          data: periods.map((p) => ({
+          data: periods.map((p: any) => ({
             obligationId: obligation.id,
             periodStart: p.periodStart,
             periodEnd: p.periodEnd,
@@ -233,7 +233,7 @@ router.post("/:id/generate-periods", async (req, res) => {
     });
 
     const existingKeys = new Set(
-      obligation.periods.map((p) => `${p.periodStart.toISOString()}|${p.periodEnd.toISOString()}`)
+      obligation.periods.map((p: any) => `${p.periodStart.toISOString()}|${p.periodEnd.toISOString()}`)
     );
 
     const toCreate = periods.filter(
@@ -243,7 +243,7 @@ router.post("/:id/generate-periods", async (req, res) => {
     if (toCreate.length === 0) return res.json({ created: 0 });
 
     await prisma.filingPeriod.createMany({
-      data: toCreate.map((p) => ({
+      data: toCreate.map((p: any) => ({
         obligationId: obligation.id,
         periodStart: p.periodStart,
         periodEnd: p.periodEnd,
